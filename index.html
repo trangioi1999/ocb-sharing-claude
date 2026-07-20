@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kiro → Claude Code — Đánh giá chuyển giao (FE team)</title>
+<meta name="description" content="So sánh Kiro và Claude Code cho team Frontend: tính năng, model, giá, structure, xử lý file/docs, testing Playwright, MCP/plugins — số liệu 07/2026.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔁</text></svg>">
+<style>
+  html,body{margin:0;height:100%}
+  :root{
+    --paper:#F1F3F7; --ink:#1B2333; --blue:#3B5BDB; --blue-soft:#D7DEFF;
+    --gray:#6B7280; --fill:#E9EAEE; --dot:#D7DAE2; --line:#C7CCD8;
+    --paper2:#F7F8FA; --white:#fff; --ok:#2F9E44; --warn:#E8930C; --crit:#E03131;
+    --kiro:#7048E8; --cc:#D9480F;
+    --sans:"Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:"Cascadia Code","Consolas",ui-monospace,"SFMono-Regular",monospace;
+  }
+  *{box-sizing:border-box}
+  .deck{position:fixed;inset:0;background:#10162a;display:grid;place-items:center;font-family:var(--sans);color:var(--ink)}
+  .stage{position:relative;width:min(100vw,calc(100vh*16/9));height:min(100vh,calc(100vw*9/16));background:var(--paper);
+    background-image:radial-gradient(circle,var(--dot) 1.1px,transparent 1.1px);background-size:28px 28px;background-position:-6px -6px;
+    overflow:hidden;container-type:size}
+  .slide{position:absolute;inset:0;padding:5cqw 6cqw 8.4cqw;display:flex;flex-direction:column;justify-content:center;
+    opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s;container-type:size}
+  .slide.active{opacity:1;visibility:visible}
+  @media (prefers-reduced-motion:reduce){.slide{transition:none}}
+  .kicker{font-family:var(--mono);font-size:1.45cqw;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);margin:0 0 1.4cqw}
+  .title{font-size:4cqw;font-weight:700;line-height:1.08;letter-spacing:-.012em;color:var(--ink);margin:0;text-wrap:balance}
+  .lead{font-size:2.1cqw;line-height:1.42;color:var(--ink);margin:1.5cqw 0 0;max-width:64ch}
+  .muted{color:var(--gray)} .accent{color:var(--blue)}
+  .c-kiro{color:var(--kiro)} .c-cc{color:var(--cc)}
+  .small{font-size:1.52cqw;line-height:1.42;color:var(--gray)}
+  .mono{font-family:var(--mono)}
+  .row{display:flex} .col{display:flex;flex-direction:column}
+  .grid{display:grid;gap:1.4cqw}
+  .g2{grid-template-columns:1fr 1fr} .g3{grid-template-columns:1fr 1fr 1fr} .g4{grid-template-columns:1fr 1fr 1fr 1fr}
+  .mt{margin-top:2cqw} .mt-s{margin-top:1.15cqw}
+  .card{background:var(--paper2);border:.5px solid var(--line);border-radius:.9cqw;padding:1.6cqw 1.8cqw}
+  .card h3{font-size:1.85cqw;font-weight:700;color:var(--ink);margin:0 0 .5cqw}
+  .card p{font-size:1.5cqw;line-height:1.45;color:var(--gray);margin:0}
+  .card .tag{font-family:var(--mono);font-size:1.26cqw;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);display:block;margin:0 0 .6cqw}
+  .card.k{border-top:.35cqw solid var(--kiro)} .card.k .tag{color:var(--kiro)}
+  .card.c{border-top:.35cqw solid var(--cc)} .card.c .tag{color:var(--cc)}
+  .chips{display:flex;flex-wrap:wrap;gap:.55cqw}
+  .chip{font-family:var(--mono);font-size:1.26cqw;color:var(--ink);background:var(--white);border:.5px solid var(--line);border-radius:.45cqw;padding:.42cqw .72cqw;white-space:nowrap;line-height:1}
+  .chip.b{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .chip.kk{background:var(--kiro);color:#fff;border-color:var(--kiro)}
+  .chip.cc{background:var(--cc);color:#fff;border-color:var(--cc)}
+  .arw{color:var(--gray);font-size:1.8cqw;font-family:var(--mono)}
+  .flow{display:flex;align-items:center;gap:.75cqw;flex-wrap:wrap}
+  .tbl{width:100%;border-collapse:collapse;font-size:1.46cqw}
+  .tbl th,.tbl td{border:.5px solid var(--line);padding:.7cqw 1cqw;text-align:left;vertical-align:top}
+  .tbl th{background:var(--fill);font-family:var(--mono);font-size:1.2cqw;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
+  .tbl td{background:var(--paper2);color:var(--ink);line-height:1.38}
+  .tbl td:first-child{font-weight:700}
+  .tbl th.hk{color:var(--kiro)} .tbl th.hc{color:var(--cc)}
+  .val{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .codebox{font-family:var(--mono);font-size:1.26cqw;line-height:1.56;background:#141a2e;color:#D7DEFF;border-radius:.8cqw;padding:1.3cqw 1.6cqw;overflow:hidden;white-space:pre-wrap}
+  .codebox .cm{color:#7C8AA5} .codebox .hl{color:#8CE99A} .codebox .kw{color:#FFD43B}
+  .pill-good{display:inline-block;font-size:1.28cqw;font-weight:700;color:var(--ok);background:#E6F7EC;border-radius:.5cqw;padding:.3cqw .72cqw}
+  .pill-bad{display:inline-block;font-size:1.28cqw;font-weight:700;color:var(--crit);background:#FDEBEB;border-radius:.5cqw;padding:.3cqw .72cqw}
+  .cover-title{font-size:7.4cqw;font-weight:800;letter-spacing:-.02em;line-height:1;color:var(--ink);margin:0}
+  .foot{position:absolute;left:6cqw;right:6cqw;bottom:3cqw;display:flex;align-items:center;gap:1.5cqw;z-index:5}
+  .wordmark{font-family:var(--mono);font-size:1.32cqw;letter-spacing:.12em;color:var(--gray)}
+  .dots{display:flex;gap:.55cqw;margin:0 auto;flex-wrap:wrap;justify-content:center;max-width:60cqw}
+  .dot{width:.8cqw;height:.8cqw;border-radius:50%;background:var(--line);border:none;padding:0;cursor:pointer;transition:transform .2s,background .2s}
+  .dot.on{background:var(--blue);transform:scale(1.35)}
+  .counter{font-family:var(--mono);font-size:1.32cqw;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .nav-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:transparent;border:.5px solid var(--line);color:var(--ink);
+    width:3.4cqw;height:3.4cqw;border-radius:50%;font-size:1.7cqw;cursor:pointer;display:grid;place-items:center;line-height:1}
+  .nav-btn:hover{background:#fff}
+  .nav-prev{left:1.4cqw} .nav-next{right:1.4cqw}
+  .slide.invert{background:var(--ink);background-image:radial-gradient(circle,rgba(255,255,255,.06) 1.1px,transparent 1.1px);background-size:28px 28px}
+  .slide.invert .title,.slide.invert .lead{color:var(--paper)}
+  .slide.invert .kicker{color:#A9B8FF}
+  .slide.invert .small,.slide.invert .muted{color:#AEB6C6}
+  .stage.on-invert .wordmark,.stage.on-invert .counter{color:#C6CEDD}
+  .stage.on-invert .dot{background:rgba(255,255,255,.28)} .stage.on-invert .dot.on{background:#A9B8FF}
+  .stage.on-invert .nav-btn{color:#C6CEDD;border-color:rgba(255,255,255,.28)}
+  .progress-header{position:absolute;top:3cqw;left:6cqw;right:6cqw;display:flex;justify-content:space-between;gap:1.5cqw;z-index:5;pointer-events:none;transition:opacity .3s ease}
+  .prog-step{flex:1;font-family:var(--mono);font-size:1.08cqw;font-weight:600;color:var(--gray);opacity:.35;padding-bottom:.5cqw;border-bottom:1.5px solid var(--line);white-space:nowrap;text-transform:uppercase;letter-spacing:.05em;transition:all .3s ease}
+  .prog-step.active{opacity:1;color:#5f3dc4;border-bottom-color:#5f3dc4}
+  .stage.on-invert .prog-step{color:#AEB6C6;border-bottom-color:rgba(255,255,255,.15)}
+  .stage.on-invert .prog-step.active{color:#d0bfff;border-bottom-color:#d0bfff}
+</style>
+</head>
+<body>
+<div class="deck">
+  <div class="stage" id="stage">
+
+    <div class="progress-header" id="progressHeader" style="opacity:0;">
+      <span class="prog-step">01 Bối cảnh</span>
+      <span class="prog-step">02 Kiro có gì</span>
+      <span class="prog-step">03 Claude có gì</span>
+      <span class="prog-step">04 So sánh cho FE</span>
+      <span class="prog-step">05 Kết luận</span>
+    </div>
+
+    <!-- 1 · COVER -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">Team sharing · số liệu chính thức 07/2026</p>
+      <h1 class="cover-title"><span class="c-kiro">Kiro</span> <span class="muted" style="font-weight:400">→</span> <span class="c-cc">Claude Code</span></h1>
+      <p class="lead">Chuyển giao có đáng không — góc nhìn team <b>Frontend</b>: tính năng · model · giá · cấu trúc dự án · xử lý file &amp; tài liệu · testing (Playwright) · plugins/MCP · hệ sinh thái Claude.</p>
+      <div class="flow mt" style="font-size:1.7cqw">
+        <span class="chip kk">Kiro · AWS · IDE có agent</span>
+        <span class="arw">→ ?</span>
+        <span class="chip cc">Claude Code · Anthropic · agent chạy trong terminal</span>
+      </div>
+    </section>
+
+    <!-- 2 · AGENDA -->
+    <section class="slide" aria-roledescription="slide">
+      <h2 class="title">Agenda</h2>
+      <div class="col" style="gap:.9cqw;margin-top:1.6cqw">
+        <div class="card" style="display:flex;gap:2cqw;padding:.9cqw 1.6cqw"><span class="tag" style="font-size:1.6cqw;margin:0;min-width:3.6cqw">01</span>
+          <div><h3 style="font-size:1.7cqw;margin:0 0 .1cqw">Bối cảnh</h3><p style="font-size:1.38cqw">Đang dùng Kiro — chuyển sang Claude Code được gì, mất gì?</p></div></div>
+        <div class="card" style="display:flex;gap:2cqw;padding:.9cqw 1.6cqw"><span class="tag" style="font-size:1.6cqw;margin:0;min-width:3.6cqw">02</span>
+          <div><h3 style="font-size:1.7cqw;margin:0 0 .1cqw">Kiro có gì</h3><p style="font-size:1.38cqw">Spec · Steering · Hooks · cấu trúc file thật · model &amp; giá</p></div></div>
+        <div class="card" style="display:flex;gap:2cqw;padding:.9cqw 1.6cqw"><span class="tag" style="font-size:1.6cqw;margin:0;min-width:3.6cqw">03</span>
+          <div><h3 style="font-size:1.7cqw;margin:0 0 .1cqw">Claude Code có gì</h3><p style="font-size:1.38cqw">Cách chạy · cấu trúc file thật · xử lý Word/Excel/HTML · hệ sinh thái Claude</p></div></div>
+        <div class="card" style="display:flex;gap:2cqw;padding:.9cqw 1.6cqw"><span class="tag" style="font-size:1.6cqw;margin:0;min-width:3.6cqw">04</span>
+          <div><h3 style="font-size:1.7cqw;margin:0 0 .1cqw">So sánh cho công việc FE</h3><p style="font-size:1.38cqw">Luồng spec→dev→test · chuyển cấu hình · build UI · testing Playwright · plugins nên cài · ví dụ code</p></div></div>
+        <div class="card" style="display:flex;gap:2cqw;padding:.9cqw 1.6cqw"><span class="tag" style="font-size:1.6cqw;margin:0;min-width:3.6cqw">05</span>
+          <div><h3 style="font-size:1.7cqw;margin:0 0 .1cqw">Kết luận</h3><p style="font-size:1.38cqw">Claude Code giải quyết vấn đề gì của team · lộ trình chuyển</p></div></div>
+      </div>
+    </section>
+
+    <!-- 3 · 01 BỐI CẢNH -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">01 · Bối cảnh</p>
+      <h2 class="title">Câu hỏi cần trả lời hôm nay</h2>
+      <p class="lead">Team FE đang làm việc với Kiro. Claude Code đang là công cụ mạnh nhất phân khúc — <b>chuyển có đáng không?</b></p>
+      <div class="grid g4 mt">
+        <div class="card"><span class="tag">Tiêu chí 1</span><h3 style="font-size:1.65cqw">Tính năng</h3><p>Những gì đang dùng ở Kiro (spec, hooks, quy ước dự án) — bên Claude Code có thay thế được?</p></div>
+        <div class="card"><span class="tag">Tiêu chí 2</span><h3 style="font-size:1.65cqw">Việc FE hàng ngày</h3><p>Build UI từ design, sửa bug giao diện, viết test, đọc tài liệu từ BA — bên nào làm tốt hơn?</p></div>
+        <div class="card"><span class="tag">Tiêu chí 3</span><h3 style="font-size:1.65cqw">Chi phí</h3><p>Mỗi người trả bao nhiêu một tháng, có dự đoán được không?</p></div>
+        <div class="card"><span class="tag">Tiêu chí 4</span><h3 style="font-size:1.65cqw">Công chuyển đổi</h3><p>Cấu hình, thói quen — mang theo được bao nhiêu, học lại mất bao lâu?</p></div>
+      </div>
+      <p class="small mt-s">Lưu ý: cả hai đều chạy model Claude bên dưới (Kiro đi qua AWS Bedrock, Claude Code lấy trực tiếp từ Anthropic) — nên đây là so sánh <b>công cụ &amp; cách làm việc</b>, không phải so sánh AI.</p>
+    </section>
+
+    <!-- 4 · 02 KIRO features -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">02 · Kiro có gì</p>
+      <h2 class="title">Kiro — IDE có agent, của AWS</h2>
+      <div class="flow mt-s" style="font-size:1.55cqw">
+        <span class="chip">Yêu cầu</span><span class="arw">→</span>
+        <span class="chip kk">requirements.md</span><span class="arw">→</span>
+        <span class="chip kk">design.md</span><span class="arw">→</span>
+        <span class="chip kk">tasks.md</span><span class="arw">→</span>
+        <span class="chip">Code + Test</span>
+      </div>
+      <div class="grid g3 mt-s">
+        <div class="card k"><span class="tag">Specs</span><p>Mỗi tính năng 1 bộ 3 file: yêu cầu → thiết kế → danh sách việc. Mình duyệt từng bước rồi agent mới code.</p></div>
+        <div class="card k"><span class="tag">Steering</span><p>File quy ước dự án (tech stack, cách đặt tên, cấu trúc) — agent tự đọc trước <b>mọi</b> câu trả lời.</p></div>
+        <div class="card k"><span class="tag">Hooks</span><p>Canh sự kiện file (lưu / tạo / xóa) → tự chạy test, lint, cập nhật tài liệu.</p></div>
+        <div class="card k"><span class="tag">2 kiểu làm việc</span><p><b>Spec session</b> (đi đủ quy trình) và <b>Vibe session</b> (chat sửa code nhanh, bỏ qua spec).</p></div>
+        <div class="card k"><span class="tag">2 mức giám sát</span><p><b>Autopilot</b> (agent tự sửa nhiều file) và <b>Supervised</b> (duyệt từng lần sửa).</p></div>
+        <div class="card k"><span class="tag">Nền tảng</span><p>IDE (nền VS Code) + CLI + Web + Mobile, chung 1 tài khoản. Có MCP + Powers (kho tích hợp).</p></div>
+      </div>
+    </section>
+
+    <!-- 5 · 02 KIRO structure ví dụ -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">02 · Kiro có gì · cấu trúc file thật</p>
+      <h2 class="title">Kiro lưu "bộ não" trong repo thế nào</h2>
+      <div class="grid mt-s" style="grid-template-columns:1fr 1.15fr">
+        <div class="codebox"><span class="cm"># Cây thư mục Kiro sinh ra</span>
+<span class="kw">.kiro/</span>
+├─ specs/
+│  └─ product-list-page/
+│     ├─ requirements.md
+│     ├─ design.md
+│     └─ tasks.md
+├─ steering/
+│  ├─ product.md   <span class="cm"># sản phẩm là gì</span>
+│  ├─ tech.md      <span class="cm"># stack, thư viện</span>
+│  └─ structure.md <span class="cm"># cấu trúc folder</span>
+└─ hooks/
+   └─ on-save-run-test.json</div>
+        <div class="codebox"><span class="cm"># Ví dụ nội dung requirements.md (chuẩn EARS)</span>
+<span class="kw">## Yêu cầu 2 — Lọc sản phẩm theo giá</span>
+User Story: Là người mua, tôi muốn lọc
+sản phẩm theo khoảng giá.
+
+Acceptance Criteria:
+<span class="hl">WHEN</span> người dùng kéo thanh chọn giá
+<span class="hl">THE SYSTEM SHALL</span> cập nhật danh sách
+  không tải lại trang
+<span class="hl">IF</span> không có sản phẩm nào khớp
+<span class="hl">THEN THE SYSTEM SHALL</span> hiện empty state
+  kèm nút "Xóa bộ lọc"
+
+<span class="cm"># tasks.md sinh tiếp: checklist từng việc,</span>
+<span class="cm"># bấm từng dòng cho agent làm → duyệt diff</span></div>
+      </div>
+      <p class="small mt-s">Điểm hay: spec viết kiểu WHEN/SHALL nên <b>mỗi dòng đều test được</b> — QC lấy làm test case, dev lấy làm định nghĩa xong việc.</p>
+    </section>
+
+    <!-- 6 · 02 KIRO model & giá -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">02 · Kiro có gì</p>
+      <h2 class="title">Kiro — model &amp; giá (tính theo credit)</h2>
+      <div class="grid mt-s" style="grid-template-columns:1.25fr 1fr;align-items:start">
+        <table class="tbl">
+          <thead><tr><th>Model</th><th>Context</th><th>Hệ số credit</th></tr></thead>
+          <tbody>
+            <tr><td>Auto <span class="muted">(tự chọn model, mặc định)</span></td><td class="val">—</td><td class="val">1.0x</td></tr>
+            <tr><td>Claude Opus 4.8</td><td class="val">1M</td><td class="val">2.2x</td></tr>
+            <tr><td>Claude Sonnet 5</td><td class="val">1M</td><td class="val">1.3x</td></tr>
+            <tr><td>GPT-5.6 Sol / Terra / Luna</td><td class="val">272K</td><td class="val">2.4 / 1.2 / 0.6x</td></tr>
+            <tr><td>Claude Haiku 4.5</td><td class="val">200K</td><td class="val">0.4x</td></tr>
+            <tr><td>Model mở (Qwen3, GLM-5...)</td><td class="val">128–256K</td><td class="val">0.05–0.5x</td></tr>
+          </tbody>
+        </table>
+        <div class="col" style="gap:1cqw">
+          <div class="card"><h3 style="font-size:1.55cqw">Gói cước</h3><p class="val" style="font-size:1.42cqw;line-height:1.7">Free · 50 credits<br>Pro · $20 · 1,000 credits<br>Pro+ · $40 · 2,000<br>Pro Max · $100 · 5,000<br>Power · $200 · 10,000<br>Mua thêm $0.04/credit</p></div>
+          <div class="card" style="background:#FBF4E9;border-color:var(--warn)"><p style="color:var(--ink)"><b>Cùng 1 việc:</b> tốn 10 credits nếu để Auto → 22 nếu chọn Opus → 0.5 nếu chọn Qwen3. Linh hoạt, nhưng <b>khó đoán trước hóa đơn</b> — hooks chạy ngầm cũng trừ credit.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · 03 CC cách chạy -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">03 · Claude Code có gì</p>
+      <h2 class="title">Claude Code — agent làm việc theo vòng lặp</h2>
+      <div class="flow mt-s" style="font-size:1.55cqw">
+        <span class="chip">Nhận việc</span><span class="arw">→</span>
+        <span class="chip cc">đọc code liên quan</span><span class="arw">→</span>
+        <span class="chip cc">sửa</span><span class="arw">→</span>
+        <span class="chip cc">chạy test / build</span><span class="arw">↺</span>
+        <span class="chip">lỗi thì tự sửa tiếp, xong mới dừng</span>
+      </div>
+      <div class="grid g3 mt-s">
+        <div class="card c"><span class="tag">CLAUDE.md</span><p>File quy ước dự án — giống Steering của Kiro. Agent đọc trước mọi việc.</p></div>
+        <div class="card c"><span class="tag">Skills</span><p>"Gói bí kíp" cho từng loại việc (viết docs, xử lý Excel, deploy...) — chỉ nạp khi cần, đỡ tốn context.</p></div>
+        <div class="card c"><span class="tag">Subagents</span><p>Agent con chạy song song, mỗi con một vùng nhớ riêng — việc to chia nhỏ làm cùng lúc.</p></div>
+        <div class="card c"><span class="tag">Plan mode</span><p>Bắt agent trình kế hoạch, mình duyệt xong mới được sửa code — giống "spec nhẹ".</p></div>
+        <div class="card c"><span class="tag">Hooks</span><p>Tự chạy lệnh trước/sau hành động của agent: sửa file xong thì lint, trước commit thì test.</p></div>
+        <div class="card c"><span class="tag">MCP</span><p>Cổng chuẩn để agent gọi tool ngoài: Figma, GitHub, Playwright, Jira... Cài như cài extension.</p></div>
+      </div>
+      <p class="small mt-s">Chạy trong terminal, có plugin hiển thị trong VS Code/JetBrains · chạy được không cần người (trong CI/CD) · không phụ thuộc cloud nào.</p>
+    </section>
+
+    <!-- 8 · 03 CC structure ví dụ -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">03 · Claude Code có gì · cấu trúc file thật</p>
+      <h2 class="title">Claude Code lưu "bộ não" trong repo thế nào</h2>
+      <div class="grid mt-s" style="grid-template-columns:1fr 1.15fr">
+        <div class="codebox"><span class="cm"># Cây thư mục trong dự án FE</span>
+<span class="kw">CLAUDE.md</span>            <span class="cm"># quy ước, agent luôn đọc</span>
+<span class="kw">.claude/</span>
+├─ skills/
+│  └─ write-spec/
+│     └─ SKILL.md    <span class="cm"># bí kíp viết spec</span>
+├─ agents/
+│  └─ code-reviewer.md
+├─ commands/
+│  └─ fix-issue.md   <span class="cm"># lệnh tắt /fix-issue</span>
+└─ settings.json     <span class="cm"># quyền + hooks</span>
+<span class="kw">.mcp.json</span>            <span class="cm"># khai báo tool ngoài</span></div>
+        <div class="codebox"><span class="cm"># Ví dụ nội dung CLAUDE.md của dự án FE</span>
+<span class="kw"># Quy ước dự án</span>
+- Stack: React 19 + TypeScript + Tailwind
+- Component đặt trong src/components/&lt;domain&gt;/
+- Dùng shadcn/ui, KHÔNG tự viết button/modal mới
+- State: TanStack Query, không dùng Redux
+- Mọi component phải có test (Vitest + RTL)
+
+<span class="kw"># Lệnh hay dùng</span>
+- npm run dev · npm run test · npm run lint
+
+<span class="kw"># Điều cấm</span>
+- Không sửa file trong src/legacy/
+- Không commit thẳng vào main</div>
+      </div>
+      <p class="small mt-s">Cả hai bên đều là <b>file Markdown nằm trong Git</b> → viết một lần, cả team dùng chung, review được như code.</p>
+    </section>
+
+    <!-- 9 · 03 CC xử lý prompt & document -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">03 · Claude Code có gì · điểm mạnh lớn nhất</p>
+      <h2 class="title">Đưa file gì vào cũng xử lý được</h2>
+      <div class="grid g2 mt-s">
+        <div class="card c"><span class="tag">Word / Excel / PDF / PowerPoint</span><p style="color:var(--ink)">Anthropic phát hành bộ <b>skills chính thức, mã nguồn mở</b> (docx · xlsx · pdf · pptx): đọc, tạo, chỉnh sửa trực tiếp. BA gửi spec bằng Word, BU gửi data bằng Excel → đưa thẳng cho agent, không cần copy-paste tay.</p></div>
+        <div class="card c"><span class="tag">HTML / CSV / Markdown / JSON / ảnh</span><p style="color:var(--ink)">Đọc trực tiếp không cần skill. Dán <b>screenshot màn hình lỗi</b> → agent nhìn ảnh, tìm code liên quan, sửa. Dán ảnh design → dựng component.</p></div>
+        <div class="card c"><span class="tag">Prompt linh hoạt 3 kiểu</span><p style="color:var(--ink)">① Chat qua lại trong terminal · ② Một phát ăn ngay: <span class="mono">claude -p "..."</span> · ③ Nối ống kiểu Unix: <span class="mono">cat loi.log | claude "vì sao?"</span></p></div>
+        <div class="card c"><span class="tag">Phân tích = chạy code thật</span><p style="color:var(--ink)">Không "đọc rồi đoán" — agent viết script (Python/Node) chạy trên file thật rồi trả kết quả. Số liệu là số chạy ra, không phải số bịa.</p></div>
+      </div>
+      <div class="codebox mt-s"><span class="cm"># Ví dụ thật — BA gửi spec.docx, BU gửi danh sách field bằng Excel:</span>
+$ claude -p <span class="kw">"đọc spec.docx và fields.xlsx, đối chiếu với form hiện tại
+   trong src/components/checkout/ — liệt kê field còn thiếu,
+   field sai validation, xuất báo cáo ra gap-report.md"</span></div>
+    </section>
+
+    <!-- 10 · 03 hệ sinh thái Claude -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">03 · Claude Code có gì · không chỉ mình Claude Code</p>
+      <h2 class="title">Hệ sinh thái Claude — 1 tài khoản, nhiều công cụ</h2>
+      <div class="grid g3 mt-s">
+        <div class="card c"><span class="tag">Claude Code</span><p style="color:var(--ink)">Agent code trong terminal — nhân vật chính hôm nay.</p></div>
+        <div class="card c"><span class="tag">Claude app + Artifacts</span><p style="color:var(--ink)">Vẽ nhanh mockup UI tương tác được (React/HTML) ngay trong chat — <b>duyệt ý tưởng design với BA/BU trước khi code thật</b>.</p></div>
+        <div class="card c"><span class="tag">Cowork (desktop)</span><p style="color:var(--ink)">Agent làm việc với file trên máy: dọn tài liệu, tổng hợp báo cáo, xử lý hàng loạt — cho việc ngoài code.</p></div>
+        <div class="card c"><span class="tag">Claude in Chrome</span><p style="color:var(--ink)">Agent thao tác trình duyệt thật — điền form, kiểm tra flow web đang chạy.</p></div>
+        <div class="card c"><span class="tag">Connectors</span><p style="color:var(--ink)">Kho kết nối sẵn (Google Drive, Jira, Slack, GitHub, Figma...) — cài 1 click, agent đọc được dữ liệu team đang dùng.</p></div>
+        <div class="card c"><span class="tag">Plugins + Agent SDK</span><p style="color:var(--ink)">Đóng gói skills + MCP thành plugin chia sẻ cả team; SDK để tự build agent riêng khi cần.</p></div>
+      </div>
+      <p class="small mt-s">Kiro cũng có IDE + CLI + Web + Mobile, nhưng đều xoay quanh việc code. Hệ Claude phủ rộng hơn: <b>code (Claude Code) + design nhanh (Artifacts) + việc văn phòng (Cowork) + browser (Chrome)</b> — cùng 1 subscription.</p>
+    </section>
+
+    <!-- 11 · 04 luồng spec dev test -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">04 · So sánh cho FE</p>
+      <h2 class="title">Luồng chạy: spec → dev → test</h2>
+      <div class="col mt-s" style="gap:1.1cqw">
+        <div class="row" style="gap:1.1cqw;align-items:center">
+          <span class="chip kk" style="min-width:8.5cqw;text-align:center">Kiro</span>
+          <div class="flow" style="font-size:1.38cqw">
+            <span class="chip">yêu cầu</span><span class="arw">→</span>
+            <span class="chip">spec 3 file (duyệt từng bước)</span><span class="arw">→</span>
+            <span class="chip">làm theo tasks.md</span><span class="arw">→</span>
+            <span class="chip">hooks tự chạy test khi lưu</span><span class="arw">→</span>
+            <span class="chip">duyệt diff trong IDE</span>
+          </div>
+        </div>
+        <div class="row" style="gap:1.1cqw;align-items:center">
+          <span class="chip cc" style="min-width:8.5cqw;text-align:center">Claude Code</span>
+          <div class="flow" style="font-size:1.38cqw">
+            <span class="chip">yêu cầu</span><span class="arw">→</span>
+            <span class="chip">plan mode (duyệt kế hoạch)</span><span class="arw">→</span>
+            <span class="chip">agent code + tự chạy test</span><span class="arw">↺</span>
+            <span class="chip">tự sửa đến khi pass</span><span class="arw">→</span>
+            <span class="chip">commit / mở PR</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid g2 mt-s">
+        <div class="card k"><p style="color:var(--ink)"><b>Kiro:</b> quy trình là <b>mặc định</b>, tool ép mình theo. Hợp khi muốn kỷ luật đến từ công cụ. Nhược: sửa cái nút cũng dễ bị kéo vào vòng spec.</p></div>
+        <div class="card c"><p style="color:var(--ink)"><b>Claude Code:</b> quy trình là <b>tùy chọn</b> — việc to thì bật plan mode, việc nhỏ chạy thẳng. Kỷ luật do team tự ghi vào CLAUDE.md + skills.</p></div>
+      </div>
+      <p class="small mt-s"><b>Cho việc chuyển giao:</b> luồng spec-trước-code của Kiro tái hiện được trên Claude Code (plan mode + skill viết spec) — không mất quy trình, chỉ đổi chỗ để cấu hình.</p>
+    </section>
+
+    <!-- 12 · 04 mapping migration -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">04 · So sánh cho FE · quan trọng nhất cho chuyển giao</p>
+      <h2 class="title">Chuyển cấu hình — gần như 1 đổi 1</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th class="hk">Kiro đang có</th><th class="hc">Claude Code tương đương</th><th>Chuyển thế nào</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">.kiro/steering/*.md</td><td class="mono">CLAUDE.md</td><td><span class="pill-good">Copy gần nguyên văn — đều là Markdown</span></td></tr>
+          <tr><td class="mono">.kiro/specs/*/*.md</td><td class="mono">giữ nguyên file .md trong repo</td><td><span class="pill-good">Claude Code đọc thẳng, không cần đổi định dạng</span></td></tr>
+          <tr><td class="mono">.kiro/hooks</td><td class="mono">hooks trong .claude/settings.json</td><td><span class="pill-good">Viết lại config, giữ nguyên logic</span></td></tr>
+          <tr><td>MCP config + Powers</td><td class="mono">.mcp.json</td><td><span class="pill-good">MCP là chuẩn chung — server dùng lại được</span></td></tr>
+          <tr><td>Autopilot / Supervised</td><td>chế độ quyền (tự chạy / hỏi trước)</td><td><span class="pill-good">Tương đương</span></td></tr>
+          <tr><td>IDE có giao diện, diff trực quan</td><td>terminal + plugin VS Code/JetBrains</td><td><span class="pill-bad">Khác trải nghiệm — cần 1–2 tuần làm quen</span></td></tr>
+        </tbody>
+      </table>
+      <p class="small mt-s"><b>Mấu chốt:</b> cả hai đều lưu cấu hình bằng <b>Markdown + Git</b> → spec, quy ước, logic hooks mang theo được gần hết. Rào cản thật duy nhất: thói quen GUI → terminal.</p>
+    </section>
+
+    <!-- 13 · 04 FE workflow -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">04 · So sánh cho FE</p>
+      <h2 class="title">Việc FE hàng ngày: từ design ra UI</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th>Việc</th><th class="hk">Kiro</th><th class="hc">Claude Code</th></tr></thead>
+        <tbody>
+          <tr><td>Ảnh design → component</td><td>✓ dán ảnh vào chat, sinh UI</td><td>✓ dán ảnh + <b>vòng lặp tự soi</b>: dựng UI → chụp màn hình bằng Playwright → tự so với design → tự chỉnh</td></tr>
+          <tr><td>Figma → code</td><td>Qua MCP server bên ngoài</td><td><b>Figma MCP</b> (chính chủ Figma): đọc đúng token màu, spacing, tên layer — không đoán mò từ ảnh</td></tr>
+          <tr><td>Sửa bug giao diện</td><td>Mô tả bằng lời + ảnh trong IDE</td><td>Dán screenshot lỗi → agent mở browser thật (Playwright) <b>tái hiện bug</b>, đọc console/network, rồi mới sửa</td></tr>
+          <tr><td>Đúng design system</td><td>Ghi vào steering</td><td>Ghi vào CLAUDE.md ("chỉ dùng shadcn/ui...") + hook chặn nếu import sai</td></tr>
+          <tr><td>Refactor nhiều component</td><td>Chạy tuần tự</td><td>Chia cho <b>agent con chạy song song</b> — mỗi con một nhóm component</td></tr>
+          <tr><td>Mockup nhanh cho BA/BU duyệt</td><td>—</td><td><b>Artifacts</b>: dựng bản demo bấm được trong vài phút, chốt xong mới code thật</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 14 · 04 testing -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">04 · So sánh cho FE</p>
+      <h2 class="title">Testing — unit, E2E, Playwright</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th>Loại test</th><th class="hk">Kiro</th><th class="hc">Claude Code</th></tr></thead>
+        <tbody>
+          <tr><td>Unit (Vitest/Jest + RTL)</td><td>Sinh theo spec; hooks tự chạy khi lưu file</td><td>Sinh + <b>tự chạy + tự sửa cho đến khi pass</b>; làm được kiểu TDD (viết test trước, code sau)</td></tr>
+          <tr><td>E2E (Playwright)</td><td>Qua MCP bên ngoài</td><td><b>Playwright MCP</b>: agent mở browser thật — bấm nút, điền form, chụp màn hình, đọc console — rồi sinh test từ hành vi thật</td></tr>
+          <tr><td>Kiểm tra giao diện (visual)</td><td>—</td><td>Chụp màn hình từng bước, so trước/sau khi sửa — bắt lệch layout sớm</td></tr>
+          <tr><td>Chặn chất lượng (quality gate)</td><td>Hooks theo sự kiện file</td><td>Hooks theo hành động agent (trước commit chạy full test) + chạy tự động trong CI</td></tr>
+        </tbody>
+      </table>
+      <div class="codebox mt-s"><span class="cm"># Ví dụ thật với Playwright MCP:</span>
+<span class="hl">&gt;</span> mở http://localhost:3000/checkout, thêm 2 sản phẩm vào giỏ,
+  áp mã SALE50 — nút "Thanh toán" đang bị disable sai.
+  Tái hiện lỗi, tìm nguyên nhân, sửa, rồi viết test E2E chặn tái phát.</div>
+      <p class="small mt-s"><b>Khác biệt chính:</b> Kiro <i>kích hoạt</i> test tự động. Claude Code <i>tham gia</i> vòng test — chạy, đọc lỗi, sửa, chạy lại, và tự thao tác browser như một QC thật.</p>
+    </section>
+
+    <!-- 15 · 04 plugins nên cài -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">04 · So sánh cho FE · thực chiến</p>
+      <h2 class="title">Plugins / MCP nên cài cho team FE — và vì sao</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th>Cài gì</th><th>Loại</th><th>Dùng làm gì · vì sao nên cài</th></tr></thead>
+        <tbody>
+          <tr><td>Playwright MCP</td><td>MCP</td><td>Agent thao tác browser thật: tái hiện bug UI, test E2E, chụp màn hình so design — <b>đáng cài nhất cho FE</b></td></tr>
+          <tr><td>Figma MCP</td><td>MCP</td><td>Đọc design trực tiếp từ Figma (token, spacing, layer) → code đúng design, hết cảnh đo tay từng px</td></tr>
+          <tr><td>GitHub MCP</td><td>MCP</td><td>Agent đọc issue, mở PR, trả lời review comment — khép kín vòng làm việc không rời terminal</td></tr>
+          <tr><td>Context7 MCP</td><td>MCP</td><td>Tra tài liệu <b>mới nhất</b> của thư viện (React 19, Next.js...) — tránh agent viết theo API cũ đã đổi</td></tr>
+          <tr><td>Skills: docx · xlsx · pdf</td><td>Skill (chính chủ Anthropic)</td><td>Đọc spec Word từ BA, data Excel từ BU, xuất báo cáo — khỏi copy-paste thủ công</td></tr>
+          <tr><td>Skill viết spec (tự làm)</td><td>Skill nội bộ</td><td>Đóng gói format spec của team → ai sinh spec cũng ra cùng một chuẩn, giữ được nếp cũ từ Kiro</td></tr>
+        </tbody>
+      </table>
+      <p class="small mt-s">Tất cả khai báo trong <span class="mono">.mcp.json</span> + <span class="mono">.claude/</span> ngay trong repo — người mới clone code về là có đủ đồ nghề, không phải cài tay từng người.</p>
+    </section>
+
+    <!-- 16 · 04 ví dụ code session -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">04 · So sánh cho FE · demo gợi ý</p>
+      <h2 class="title">3 ví dụ chạy thật được ngay</h2>
+      <div class="grid g3 mt-s">
+        <div class="codebox"><span class="cm"># 1 · Ảnh design → component</span>
+$ claude
+<span class="hl">&gt;</span> [dán ảnh design]
+  dựng ProductCard theo ảnh này,
+  dùng shadcn/ui + Tailwind,
+  viết luôn test RTL,
+  chạy test xong mới dừng
+
+<span class="cm"># agent: tạo file → chạy test</span>
+<span class="cm"># → fail → tự sửa → pass ✓</span></div>
+        <div class="codebox"><span class="cm"># 2 · Spec Word của BA → checklist</span>
+$ claude -p <span class="kw">"đọc spec-v2.docx,
+  so với màn hình checkout
+  hiện tại, liệt kê những gì
+  phải sửa, ước lượng độ khó
+  từng mục, xuất ra todo.md"</span>
+
+<span class="cm"># dùng skill docx chính chủ,</span>
+<span class="cm"># không cần copy nội dung ra tay</span></div>
+        <div class="codebox"><span class="cm"># 3 · Bug chỉ tái hiện trên browser</span>
+$ claude
+<span class="hl">&gt;</span> trang /orders bị nhảy layout
+  khi bấm filter. Mở browser
+  tái hiện, chụp màn hình
+  trước/sau, tìm nguyên nhân,
+  sửa và chạy lại cho tôi xem
+
+<span class="cm"># Playwright MCP: bấm, chụp,</span>
+<span class="cm"># đọc console → sửa → xác nhận ✓</span></div>
+      </div>
+      <p class="small mt-s">Cả 3 ví dụ dùng đúng đồ nghề ở slide trước — có thể demo live trong buổi sharing nếu còn thời gian.</p>
+    </section>
+
+    <!-- 17 · 05 được gì -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">05 · Kết luận</p>
+      <h2 class="title">Chuyển sang Claude Code — được gì?</h2>
+      <div class="grid g2 mt-s">
+        <div class="card c"><span class="tag">1 · Model mới nhất, sớm nhất</span><p style="color:var(--ink)">Opus 4.8 / Sonnet 5 dùng được ngay ngày phát hành — Kiro nhận qua Bedrock nên trễ hơn.</p></div>
+        <div class="card c"><span class="tag">2 · Xử lý tài liệu trọn gói</span><p style="color:var(--ink)">Spec Word từ BA, data Excel từ BU → đưa thẳng cho agent đọc, đối chiếu, xuất báo cáo — bằng skills chính chủ.</p></div>
+        <div class="card c"><span class="tag">3 · Testing sâu hơn hẳn</span><p style="color:var(--ink)">Vòng lặp test-sửa-test tự động + Playwright thao tác browser thật — thứ Kiro chỉ làm được một nửa (kích hoạt test).</p></div>
+        <div class="card c"><span class="tag">4 · Design → code chuẩn hơn</span><p style="color:var(--ink)">Figma MCP đọc đúng token; Artifacts dựng mockup duyệt nhanh với BA/BU trước khi code thật.</p></div>
+        <div class="card c"><span class="tag">5 · Tự động hóa không cần người</span><p style="color:var(--ink)">Chạy nền trong CI/CD: bot review PR, sinh docs định kỳ, chặn chất lượng trước merge.</p></div>
+        <div class="card c"><span class="tag">6 · Chi phí đoán trước được</span><p style="color:var(--ink)">$20–200/người/tháng cố định — không lo credit đội lên vì hooks chạy ngầm hay chọn nhầm model đắt.</p></div>
+      </div>
+    </section>
+
+    <!-- 18 · 05 mất gì -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">05 · Kết luận · nói thật</p>
+      <h2 class="title">Chuyển đi — mất gì, bù thế nào?</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th>Mất khi rời Kiro</th><th>Mức độ</th><th>Cách bù trên Claude Code</th></tr></thead>
+        <tbody>
+          <tr><td>IDE có giao diện + diff trực quan, duyệt 1 click</td><td><span class="pill-bad">Đáng kể</span></td><td>Plugin VS Code/JetBrains hiển thị diff — quen trong 1–2 tuần</td></tr>
+          <tr><td>Nhiều model rẻ để tiết kiệm (Qwen3 0.05x...)</td><td><span class="pill-bad">Đáng kể nếu đang tận dụng</span></td><td>Không có tương đương — bù bằng giá cố định + để việc nhỏ cho Haiku</td></tr>
+          <tr><td>Quy trình spec ép sẵn</td><td><span class="pill-good">Nhỏ</span></td><td>Plan mode + skill viết spec + mang nguyên file spec .md cũ sang</td></tr>
+          <tr><td>Free tier dùng thật được</td><td><span class="pill-good">Nhỏ</span></td><td>Mức vào cửa là Claude Pro $20</td></tr>
+          <tr><td>Kiro Web/Mobile (giao việc từ xa)</td><td><span class="pill-good">Nhỏ</span></td><td>Claude Code chạy trên CI/server; app Claude theo dõi từ xa</td></tr>
+        </tbody>
+      </table>
+      <p class="small mt-s">Không bắt buộc "một mất một còn" — có thể giữ Kiro cho ai quen IDE trong lúc chuyển dần.</p>
+    </section>
+
+    <!-- 19 · 05 tổng kết vấn đề -->
+    <section class="slide" aria-roledescription="slide">
+      <p class="kicker">05 · Kết luận</p>
+      <h2 class="title">Claude Code giải quyết vấn đề gì của team FE?</h2>
+      <table class="tbl mt-s">
+        <thead><tr><th>Vấn đề đang gặp</th><th>Claude Code xử lý bằng</th></tr></thead>
+        <tbody>
+          <tr><td>Spec từ BA là file Word, đối chiếu thủ công mất thời gian</td><td>Skill docx — đọc, so với code hiện tại, xuất checklist trong 1 lệnh</td></tr>
+          <tr><td>Code từ design hay lệch màu, lệch spacing</td><td>Figma MCP đọc đúng token + vòng lặp tự chụp màn hình so với design</td></tr>
+          <tr><td>Bug giao diện khó tả bằng lời, mất thời gian tái hiện</td><td>Dán screenshot + Playwright MCP tự tái hiện trên browser thật</td></tr>
+          <tr><td>Test E2E mỏng, bug lọt ra staging</td><td>Agent sinh test từ hành vi thật, tự chạy tự sửa đến khi pass</td></tr>
+          <tr><td>Việc lặp lại (review, sinh docs, check trước merge) chiếm giờ dev</td><td>Chạy nền trong CI/CD, không cần người ngồi canh</td></tr>
+          <tr><td>Quy ước dự án mỗi người hiểu một kiểu</td><td>CLAUDE.md + skills nằm trong repo — một nguồn chuẩn duy nhất, review được</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 20 · 05 kết luận invert -->
+    <section class="slide invert" aria-roledescription="slide">
+      <p class="kicker">05 · Kết luận</p>
+      <h2 class="title">Chuyển giao: khả thi</h2>
+      <div class="grid g3 mt">
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)">
+          <h3 style="color:var(--paper)">Bước 1 · Thử (2 tuần)</h3>
+          <p style="color:#AEB6C6">Chọn 1 tính năng: chuyển steering → CLAUDE.md, giữ nguyên spec .md, cài Playwright + Figma MCP, chạy song song 2 tool rồi so kết quả.</p>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)">
+          <h3 style="color:var(--paper)">Bước 2 · Đóng gói</h3>
+          <p style="color:#AEB6C6">Viết skill spec/test theo chuẩn team, cấu hình hooks + MCP trong repo — người mới clone về là dùng được ngay.</p>
+        </div>
+        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)">
+          <h3 style="color:var(--paper)">Bước 3 · Nhân rộng</h3>
+          <p style="color:#AEB6C6">Chuyển dần theo dự án; ai quen IDE có thể giữ Kiro trong giai đoạn chuyển tiếp.</p>
+        </div>
+      </div>
+      <p class="lead mt" style="font-size:1.9cqw">Cấu hình hai bên đều là <b>Markdown + Git</b> — tài sản mang theo được gần hết. Thứ cần đầu tư thật: <b>thói quen terminal + đóng gói quy ước vào repo</b>.</p>
+    </section>
+
+    <!-- 21 · Q&A -->
+    <section class="slide" aria-roledescription="slide">
+      <h2 class="title">Q&amp;A</h2>
+      <p class="lead">Cảm ơn team đã lắng nghe 🙌</p>
+      <div class="mt">
+        <p class="small" style="margin:0 0 .6cqw"><b>Nguồn số liệu (07/2026):</b></p>
+        <div class="chips">
+          <span class="chip">kiro.dev/docs · pricing</span>
+          <span class="chip">code.claude.com/docs</span>
+          <span class="chip">anthropic.com — Agent Skills</span>
+          <span class="chip">github.com/anthropics/skills</span>
+          <span class="chip">Figma MCP · Playwright MCP</span>
+        </div>
+      </div>
+      <p class="small mt">Tran Gioi · gioitv.dev@gmail.com</p>
+    </section>
+
+    <button class="nav-btn nav-prev" id="prev" aria-label="Previous slide">‹</button>
+    <button class="nav-btn nav-next" id="next" aria-label="Next slide">›</button>
+    <div class="foot">
+      <span class="wordmark">KIRO → CLAUDE CODE · FE</span>
+      <div class="dots" id="dots"></div>
+      <span class="counter" id="counter">01 / 21</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var stage=document.getElementById('stage');
+  var dotsWrap=document.getElementById('dots');
+  var counter=document.getElementById('counter');
+  var progHeader=document.getElementById('progressHeader');
+  var progSteps=[].slice.call(progHeader.querySelectorAll('.prog-step'));
+  var idx=0;
+  slides.forEach(function(s,i){
+    var b=document.createElement('button');
+    b.className='dot';b.type='button';b.setAttribute('aria-label','Slide '+(i+1));
+    b.addEventListener('click',function(){go(i);});
+    dotsWrap.appendChild(b);
+  });
+  var dots=[].slice.call(dotsWrap.children);
+  function pad(n){return (n<10?'0':'')+n;}
+  function getStep(i){
+    if(i<2)return 0;      // cover + agenda
+    if(i===2)return 1;    // 01 bối cảnh
+    if(i<=5)return 2;     // 02 kiro (3 slides)
+    if(i<=9)return 3;     // 03 claude code (4 slides)
+    if(i<=15)return 4;    // 04 so sánh (6 slides)
+    if(i<=19)return 5;    // 05 kết luận
+    return 0;             // Q&A
+  }
+  function render(){
+    slides.forEach(function(s,i){s.classList.toggle('active',i===idx);});
+    dots.forEach(function(d,i){d.classList.toggle('on',i===idx);});
+    stage.classList.toggle('on-invert',slides[idx].classList.contains('invert'));
+    counter.textContent=pad(idx+1)+' / '+pad(slides.length);
+    var step=getStep(idx);
+    if(step===0){progHeader.style.opacity='0';}
+    else{
+      progHeader.style.opacity='1';
+      progSteps.forEach(function(el,i){el.classList.toggle('active',(i+1)===step);});
+    }
+    var h='#slide-'+(idx+1);
+    if(location.hash!==h){try{history.replaceState(null,'',h);}catch(e){location.hash=h;}}
+  }
+  function go(i){idx=Math.max(0,Math.min(slides.length-1,i));render();}
+  function next(){go(idx+1);} function prev(){go(idx-1);}
+  document.getElementById('next').addEventListener('click',next);
+  document.getElementById('prev').addEventListener('click',prev);
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+    else if(e.key==='Home'){e.preventDefault();go(0);}
+    else if(e.key==='End'){e.preventDefault();go(slides.length-1);}
+  });
+  var tx=null;
+  document.addEventListener('touchstart',function(e){tx=e.changedTouches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(tx===null)return;var dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>40){dx<0?next():prev();}tx=null;
+  },{passive:true});
+  window.addEventListener('hashchange',function(){
+    var m=location.hash.match(/#slide-(\d+)/);if(m)go(parseInt(m[1],10)-1);
+  });
+  var m0=location.hash.match(/#slide-(\d+)/);
+  if(m0)idx=Math.max(0,Math.min(slides.length-1,parseInt(m0[1],10)-1));
+  render();
+})();
+</script>
+</body>
+</html>
