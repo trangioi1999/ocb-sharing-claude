@@ -20,7 +20,7 @@
   .deck{position:fixed;inset:0;background:#10162a;display:grid;place-items:center;font-family:var(--sans);color:var(--ink)}
   .stage{position:relative;width:100%;height:100%;background:var(--paper);
     overflow:hidden;container-type:size}
-  .slide{position:absolute;inset:0;padding:5cqw 6cqw 8.4cqw;display:flex;flex-direction:column;justify-content:center;
+  .slide{position:absolute;inset:0;padding:5cqw 6cqw 6cqw;display:flex;flex-direction:column;justify-content:center;
     opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s;container-type:size}
   .slide.active{opacity:1;visibility:visible}
   @media (prefers-reduced-motion:reduce){.slide{transition:none}}
@@ -77,8 +77,8 @@
   .stage.on-invert .wordmark,.stage.on-invert .counter{color:#C6CEDD}
   .stage.on-invert .dot{background:rgba(255,255,255,.28)} .stage.on-invert .dot.on{background:#A9B8FF}
   .stage.on-invert .nav-btn{color:#C6CEDD;border-color:rgba(255,255,255,.28)}
-  .progress-header{position:absolute;top:3cqw;left:6cqw;right:6cqw;display:flex;justify-content:space-between;gap:1.5cqw;z-index:5;pointer-events:none;transition:opacity .3s ease}
-  .prog-step{flex:1;font-family:var(--mono);font-size:1.08cqw;font-weight:600;color:var(--gray);opacity:.35;padding-bottom:.5cqw;border-bottom:1.5px solid var(--line);white-space:nowrap;text-transform:uppercase;letter-spacing:.05em;transition:all .3s ease}
+  .progress-header{position:absolute;top:1.5cqw;left:6cqw;right:6cqw;display:flex;justify-content:space-between;gap:1.5cqw;z-index:5;pointer-events:none;transition:opacity .3s ease}
+  .prog-step{flex:1;font-family:var(--mono);font-size:.92cqw;font-weight:600;color:var(--gray);opacity:.35;padding-bottom:.32cqw;border-bottom:1.5px solid var(--line);white-space:nowrap;text-transform:uppercase;letter-spacing:.05em;transition:all .3s ease}
   .prog-step.active{opacity:1;color:#5f3dc4;border-bottom-color:#5f3dc4}
   .stage.on-invert .prog-step{color:#AEB6C6;border-bottom-color:rgba(255,255,255,.15)}
   .stage.on-invert .prog-step.active{color:#d0bfff;border-bottom-color:#d0bfff}
