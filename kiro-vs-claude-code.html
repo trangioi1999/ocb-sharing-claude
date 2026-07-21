@@ -18,8 +18,7 @@
   }
   *{box-sizing:border-box}
   .deck{position:fixed;inset:0;background:#10162a;display:grid;place-items:center;font-family:var(--sans);color:var(--ink)}
-  .stage{position:relative;width:min(100vw,calc(100vh*16/9));height:min(100vh,calc(100vw*9/16));background:var(--paper);
-    background-image:radial-gradient(circle,var(--dot) 1.1px,transparent 1.1px);background-size:28px 28px;background-position:-6px -6px;
+  .stage{position:relative;width:100%;height:100%;background:var(--paper);
     overflow:hidden;container-type:size}
   .slide{position:absolute;inset:0;padding:5cqw 6cqw 8.4cqw;display:flex;flex-direction:column;justify-content:center;
     opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s;container-type:size}
@@ -61,10 +60,10 @@
   .pill-good{display:inline-block;font-size:1.28cqw;font-weight:700;color:var(--ok);background:#E6F7EC;border-radius:.5cqw;padding:.3cqw .72cqw}
   .pill-bad{display:inline-block;font-size:1.28cqw;font-weight:700;color:var(--crit);background:#FDEBEB;border-radius:.5cqw;padding:.3cqw .72cqw}
   .cover-title{font-size:7.4cqw;font-weight:800;letter-spacing:-.02em;line-height:1;color:var(--ink);margin:0}
-  .foot{position:absolute;left:6cqw;right:6cqw;bottom:3cqw;display:flex;align-items:center;gap:1.5cqw;z-index:5}
+  .foot{position:absolute;left:6cqw;right:6cqw;bottom:1cqw;display:flex;align-items:center;gap:1.5cqw;z-index:5}
   .wordmark{font-family:var(--mono);font-size:1.32cqw;letter-spacing:.12em;color:var(--gray)}
-  .dots{display:flex;gap:.55cqw;margin:0 auto;flex-wrap:wrap;justify-content:center;max-width:60cqw}
-  .dot{width:.8cqw;height:.8cqw;border-radius:50%;background:var(--line);border:none;padding:0;cursor:pointer;transition:transform .2s,background .2s}
+  .dots{display:flex;gap:.4cqw;margin:0 auto;flex-wrap:wrap;justify-content:center;max-width:60cqw}
+  .dot{width:.5cqw;height:.5cqw;border-radius:50%;background:var(--line);border:none;padding:0;cursor:pointer;transition:transform .2s,background .2s}
   .dot.on{background:var(--blue);transform:scale(1.35)}
   .counter{font-family:var(--mono);font-size:1.32cqw;font-variant-numeric:tabular-nums;color:var(--ink)}
   .nav-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:transparent;border:.5px solid var(--line);color:var(--ink);
