@@ -18,7 +18,7 @@
   }
   *{box-sizing:border-box}
   .deck{position:fixed;inset:0;background:#10162a;display:grid;place-items:center;font-family:var(--sans);color:var(--ink)}
-  .stage{position:relative;width:100%;height:100%;background:var(--paper);
+  .stage{position:relative;width:min(100%,calc(100vh*16/9));height:min(100%,calc(100vw*9/16));background:var(--paper);
     overflow:hidden;container-type:size}
   .slide{position:absolute;inset:0;padding:5cqw 6cqw 6cqw;display:flex;flex-direction:column;justify-content:flex-start;
     opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s;container-type:size}
@@ -510,22 +510,22 @@ $ claude
       </table>
     </section>
 
-    <!-- 20 · 05 kết luận invert -->
-    <section class="slide invert" aria-roledescription="slide">
+    <!-- 20 · 05 kết luận -->
+    <section class="slide" aria-roledescription="slide">
       <p class="kicker">05 · Kết luận</p>
       <h2 class="title">Chuyển giao: khả thi</h2>
       <div class="grid g3 mt">
-        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)">
-          <h3 style="color:var(--paper)">Bước 1 · Thử (2 tuần)</h3>
-          <p style="color:#AEB6C6">Chọn 1 tính năng: chuyển steering → CLAUDE.md, giữ nguyên spec .md, cài Playwright + Figma MCP, chạy song song 2 tool rồi so kết quả.</p>
+        <div class="card">
+          <h3>Bước 1 · Thử (2 tuần)</h3>
+          <p>Chọn 1 tính năng: chuyển steering → CLAUDE.md, giữ nguyên spec .md, cài Playwright + Figma MCP, chạy song song 2 tool rồi so kết quả.</p>
         </div>
-        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)">
-          <h3 style="color:var(--paper)">Bước 2 · Đóng gói</h3>
-          <p style="color:#AEB6C6">Viết skill spec/test theo chuẩn team, cấu hình hooks + MCP trong repo — người mới clone về là dùng được ngay.</p>
+        <div class="card">
+          <h3>Bước 2 · Đóng gói</h3>
+          <p>Viết skill spec/test theo chuẩn team, cấu hình hooks + MCP trong repo — người mới clone về là dùng được ngay.</p>
         </div>
-        <div class="card" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.18)">
-          <h3 style="color:var(--paper)">Bước 3 · Nhân rộng</h3>
-          <p style="color:#AEB6C6">Chuyển dần theo dự án; ai quen IDE có thể giữ Kiro trong giai đoạn chuyển tiếp.</p>
+        <div class="card">
+          <h3>Bước 3 · Nhân rộng</h3>
+          <p>Chuyển dần theo dự án; ai quen IDE có thể giữ Kiro trong giai đoạn chuyển tiếp.</p>
         </div>
       </div>
       <p class="lead mt" style="font-size:1.9cqw">Cấu hình hai bên đều là <b>Markdown + Git</b> — tài sản mang theo được gần hết. Thứ cần đầu tư thật: <b>thói quen terminal + đóng gói quy ước vào repo</b>.</p>
